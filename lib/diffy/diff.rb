@@ -8,6 +8,8 @@ module Diffy
       :context => nil,
       :allow_empty_diff => true,
       :raise_on_error => false,
+      :diff_timeout => nil,
+      :diff_max_length => nil,
     }
 
     class << self
@@ -56,7 +58,13 @@ module Diffy
           *@paths
         ]
 
-        child = POSIX::Spawn::Child.new(*diff_command)
+        child = begin
+          POSIX::Spawn::Child.new(*diff_command, spawn_options)
+        rescue POSIX::Spawn::TimeoutExceeded
+          raise Diffy::Errors::DiffProgramTimeout
+        rescue POSIX::Spawn::MaximumOutputExceeded
+          raise Diffy::Errors::DiffMaxLengthExceeded
+        end
 
         if @options[:raise_on_error]
           case child.status.exitstatus
@@ -193,5 +201,11 @@ module Diffy
       Array(options[:context] ? "-U#{options[:context]}" : options[:diff])
     end
 
+    def spawn_options
+      {}.tap do |h|
+        h[:timeout] = @options[:diff_timeout] unless @options[:diff_timeout].nil?
+        h[:max] = @options[:diff_max_length] unless @options[:diff_max_length].nil?
+      end
+    end
   end
 end

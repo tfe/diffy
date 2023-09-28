@@ -619,6 +619,44 @@ ERROR
       end
     end
   end
+
+  describe "options[:diff_timeout]" do
+    it "should raise an exception when the diff takes longer than given timeout" do
+      expect {
+        Diffy::Diff.new("a", "b", diff_timeout: 0.00000001).diff
+      }.to raise_exception(Diffy::Errors::DiffProgramTimeout)
+    end
+
+    it "should not raise an exception when the diff completes within the timeout" do
+      expect {
+        Diffy::Diff.new("a", "b", diff_timeout: 100).diff
+      }.to_not raise_exception(Diffy::Errors::DiffProgramTimeout)
+    end
+
+    it "should not pass option to POSIX::Spawn when the option is not enabled" do
+      expect(POSIX::Spawn::Child).to receive(:new).with(anything, anything, anything, anything, {}).and_call_original
+      Diffy::Diff.new("a", "b").diff
+    end
+  end
+
+  describe "options[:diff_max_length]" do
+    it "should raise an exception when the diff exceeds given max length" do
+      expect {
+        Diffy::Diff.new("aa", "bb", diff_max_length: 1).diff
+      }.to raise_exception(Diffy::Errors::DiffMaxLengthExceeded)
+    end
+
+    it "should not raise an exception when the diff is within given max length" do
+      expect {
+        Diffy::Diff.new("aa", "bb", diff_max_length: 1000).diff
+      }.to_not raise_exception(Diffy::Errors::DiffMaxLengthExceeded)
+    end
+
+    it "should not pass option to POSIX::Spawn when the option is not enabled" do
+      expect(POSIX::Spawn::Child).to receive(:new).with(anything, anything, anything, anything, {}).and_call_original
+      Diffy::Diff.new("aa", "bb").diff
+    end
+  end
 end
 
 describe Diffy::SplitDiff do
