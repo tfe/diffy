@@ -600,6 +600,25 @@ baz
       DIFF
     end
   end
+
+  describe "options[:raise_on_error]" do
+    it "should raise an exception on an error from the diff program" do
+      expected_message = <<-ERROR
+diff: .no_file1.file: No such file or directory
+ERROR
+      path1 = ".no_file1.file"
+      path2 = ".no_file2.file"
+      expect{ Diffy::Diff.new(path1, path2, :source => 'files', raise_on_error: true).diff }.to raise_exception(Diffy::Errors::DiffProgramError, expected_message)
+    end
+
+    context "without option enabled" do
+      it "should not raise" do
+        path1 = ".no_file1.file"
+        path2 = ".no_file2.file"
+        expect(Diffy::Diff.new(path1, path2, :source => 'files').diff).to eq('')
+      end
+    end
+  end
 end
 
 describe Diffy::SplitDiff do

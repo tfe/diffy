@@ -7,6 +7,7 @@ module Diffy
       :include_plus_and_minus_in_html => false,
       :context => nil,
       :allow_empty_diff => true,
+      :raise_on_error => false,
     }
 
     class << self
@@ -56,6 +57,15 @@ module Diffy
         ]
 
         child = POSIX::Spawn::Child.new(*diff_command)
+
+        if @options[:raise_on_error]
+          case child.status.exitstatus
+          when 0 # success, diff is empty
+          when 1 # "success", diff is present
+          else raise Diffy::Errors::DiffProgramError.new(child.err)
+          end
+        end
+
         diff = child.out
 
         # Attempt to encode to default encoding. The previous implementation
