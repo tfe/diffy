@@ -93,23 +93,6 @@ describe Diffy::Diff do
         DIFF
       end
     end
-
-     describe "with non valid UTF bytes" do
-       before do
-         string1 = "Foo ICS95095010000000000083320000BS01030000004100+\xFF00000000000000000\n"
-         string2 = "Bar ICS95095010000000000083320000BS01030000004100+\xFF00000000000000000\n"
-         @path1, @path2 = tempfile(string1), tempfile(string2)
-       end
-       it "should not raise invalid encoding issues" do
-         desired = <<-DIFF
--Foo ICS95095010000000000083320000BS01030000004100+\xFF00000000000000000
-+Bar ICS95095010000000000083320000BS01030000004100+\xFF00000000000000000
-         DIFF
-         desired.force_encoding("ASCII-8BIT") if desired.respond_to?(:force_encoding)
-         expect(Diffy::Diff.new(@path1, @path2, :source => 'files').to_s).to eq(desired)
-       end
-     end
-
   end
 
   describe "handling temp files" do

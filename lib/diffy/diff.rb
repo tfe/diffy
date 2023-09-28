@@ -49,8 +49,20 @@ module Diffy
             [string1, string2]
           end
 
-        diff, _stderr, _process_status = Open3.capture3(diff_bin, *(diff_options + @paths))
-        diff.force_encoding('ASCII-8BIT') if diff.respond_to?(:valid_encoding?) && !diff.valid_encoding?
+        diff_command = [
+          diff_bin,
+          *diff_options,
+          *@paths
+        ]
+
+        child = POSIX::Spawn::Child.new(*diff_command)
+        diff = child.out
+
+        # Attempt to encode to default encoding. The previous implementation
+        # using Open3.capture3 must have been doing this internally since
+        # downstream things didn't complain about encoding when using that.
+        diff.force_encoding(Encoding.default_external)
+
         if diff =~ /\A\s*\Z/ && !options[:allow_empty_diff]
           diff = case options[:source]
           when 'strings' then string1
